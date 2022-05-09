@@ -34,6 +34,9 @@ extern "C" {
 
 #define SPI_BUFFER_LEN SPI_MAX_DMA_LEN
 
+#define ARDUINO_SAMD_MKRVIDOR4000
+
+
 int debug = 0;
 
 uint8_t* commandBuffer;
@@ -85,6 +88,13 @@ void setupBluetooth();
 void setup() {
   setDebug(debug);
 
+
+  #if defined(ARDUINO_SAMD_MKRVIDOR4000)
+    pinMode(16, OUTPUT);
+    pinMode(17, OUTPUT);
+    digitalWrite(16, HIGH);
+    digitalWrite(17, HIGH);
+  #endif
   // put SWD and SWCLK pins connected to SAMD as inputs
   pinMode(15, INPUT);
   pinMode(21, INPUT);
@@ -99,15 +109,25 @@ void setup() {
 
 // #define UNO_WIFI_REV2
 
+
 void setupBluetooth() {
   periph_module_enable(PERIPH_UART1_MODULE);
   periph_module_enable(PERIPH_UHCI0_MODULE);
 
-#ifdef UNO_WIFI_REV2
+#if defined(UNO_WIFI_REV2)
   uart_set_pin(UART_NUM_1, 1, 3, 33, 0); // TX, RX, RTS, CTS
+#elif defined(NANO_RP2040_CONNECT)
+  uart_set_pin(UART_NUM_1, 1, 3, 33, 12); // TX, RX, RTS, CTS
+#elif defined(ARDUINO_SAMD_MKRVIDOR4000)
+  uart_set_pin(UART_NUM_1, 22, 23, 20, 21); // TX, RX, RTS, CTS
 #else
   uart_set_pin(UART_NUM_1, 23, 12, 18, 5);
+  // GPIO_23:   GPIO_23/UART_RXD,   
+  // GPIO_12:   NC?,                
+  // GPIO_18:   GPIO_18/RMII_CRS_DV
+  // GPIO_5:    GPIO_5
 #endif
+
   uart_set_hw_flow_ctrl(UART_NUM_1, UART_HW_FLOWCTRL_CTS_RTS, 5);
 
   esp_bt_controller_config_t btControllerConfig = BT_CONTROLLER_INIT_CONFIG_DEFAULT(); 
