@@ -38,6 +38,8 @@ extern void digitalWrite(uint32_t pin, uint32_t val);
 
 extern int digitalRead(uint32_t pin);
 
+extern void resetPin(uint32_t pin);
+
 #ifdef __cplusplus
 }
 #endif

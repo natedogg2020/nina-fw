@@ -22,13 +22,25 @@
 
 #define ARDUINO_MAIN
 #include "Arduino.h"
+#include <driver/gpio.h>
 
 void arduino_main(void*) {
   init();
 
+  
   setup();
 
   while (1) {
+    // gpio_set_direction((gpio_num_t)16, GPIO_MODE_OUTPUT);
+    // gpio_set_pull_mode((gpio_num_t)16, GPIO_FLOATING);
+    // gpio_reset_pin((gpio_num_t)16);
+    // gpio_reset_pin((gpio_num_t)17);
+    // gpio_set_direction((gpio_num_t)16, (gpio_mode_t) GPIO_MODE_DEF_OUTPUT);
+    // gpio_set_pull_mode((gpio_num_t)16, (gpio_pull_mode_t) GPIO_PULLUP_PULLDOWN);
+    // gpio_set_direction((gpio_num_t)17, (gpio_mode_t) GPIO_MODE_OUTPUT);
+    // gpio_set_pull_mode((gpio_num_t)17, (gpio_pull_mode_t) GPIO_PULLUP_PULLDOWN);
+    // gpio_set_level((gpio_num_t)16, 0);
+    // gpio_set_level((gpio_num_t)17, 1);
     loop();
   }
 }

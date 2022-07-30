@@ -30,6 +30,9 @@ extern "C" {
 #include <SPIS.h>
 #include <WiFi.h>
 
+#include <driver/gpio.h>
+#include "wiring_digital.h"
+
 #include "CommandHandler.h"
 
 #define SPI_BUFFER_LEN SPI_MAX_DMA_LEN
@@ -89,20 +92,27 @@ void setup() {
   setDebug(debug);
 
 
-  #if defined(ARDUINO_SAMD_MKRVIDOR4000)
-    pinMode(16, OUTPUT);
-    pinMode(17, OUTPUT);
-    digitalWrite(16, HIGH);
-    digitalWrite(17, HIGH);
-  #endif
+  // #if defined(ARDUINO_SAMD_MKRVIDOR4000)
+  // resetPin(5);
+  // resetPin(25);
+  // resetPin(26);
+  pinMode(25, OUTPUT);
+  pinMode(26, OUTPUT);
+  // Blue should be on
+  digitalWrite(25, LOW);
+  digitalWrite(26, HIGH);
+  
   // put SWD and SWCLK pins connected to SAMD as inputs
   pinMode(15, INPUT);
   pinMode(21, INPUT);
+  
 
   pinMode(5, INPUT);
   if (digitalRead(5) == LOW) {
     setupBluetooth();
   } else {
+    // Blue + Green
+    digitalWrite(26, LOW);
     setupWiFi();
   }
 }
@@ -111,33 +121,42 @@ void setup() {
 
 
 void setupBluetooth() {
+  // resetPin(1);
+  // resetPin(2);
+  // resetPin(22);
+  // resetPin(19);
+  // Green
+  digitalWrite(25, HIGH);
+  digitalWrite(26, LOW);
   periph_module_enable(PERIPH_UART1_MODULE);
   periph_module_enable(PERIPH_UHCI0_MODULE);
 
-#if defined(UNO_WIFI_REV2)
-  uart_set_pin(UART_NUM_1, 1, 3, 33, 0); // TX, RX, RTS, CTS
-#elif defined(NANO_RP2040_CONNECT)
-  uart_set_pin(UART_NUM_1, 1, 3, 33, 12); // TX, RX, RTS, CTS
-#elif defined(ARDUINO_SAMD_MKRVIDOR4000)
-  uart_set_pin(UART_NUM_1, 22, 23, 20, 21); // TX, RX, RTS, CTS
-#else
-  uart_set_pin(UART_NUM_1, 23, 12, 18, 5);
-  // GPIO_23:   GPIO_23/UART_RXD,   
-  // GPIO_12:   NC?,                
-  // GPIO_18:   GPIO_18/RMII_CRS_DV
-  // GPIO_5:    GPIO_5
-#endif
+// #if defined(UNO_WIFI_REV2)
+//   uart_set_pin(UART_NUM_1, 1, 3, 33, 0); // TX, RX, RTS, CTS
+// #elif defined(NANO_RP2040_CONNECT)
+//   uart_set_pin(UART_NUM_1, 1, 3, 33, 12); // TX, RX, RTS, CTS
+// #elif defined(ARDUINO_SAMD_MKRVIDOR4000)
+  uart_set_pin(UART_NUM_1, 1, 3, 22, 19); // TX, RX, RTS, CTS
+// #else
+//   uart_set_pin(UART_NUM_1, 23, 12, 18, 5);
+//   // GPIO_23:   GPIO_23/UART_RXD,   
+//   // GPIO_12:   NC?,                
+//   // GPIO_18:   GPIO_18/RMII_CRS_DV
+//   // GPIO_5:    GPIO_5
+// #endif
 
   uart_set_hw_flow_ctrl(UART_NUM_1, UART_HW_FLOWCTRL_CTS_RTS, 5);
 
   esp_bt_controller_config_t btControllerConfig = BT_CONTROLLER_INIT_CONFIG_DEFAULT(); 
 
   btControllerConfig.hci_uart_no = UART_NUM_1;
-#ifdef UNO_WIFI_REV2
-  btControllerConfig.hci_uart_baudrate = 115200;
-#else
-  btControllerConfig.hci_uart_baudrate = 912600;
-#endif
+// #if defined(UNO_WIFI_REV2)
+//   btControllerConfig.hci_uart_baudrate = 115200;
+// #elif defined(ARDUINO_SAMD_MKRVIDOR4000)
+  btControllerConfig.hci_uart_baudrate = 119400;
+// #else
+//   btControllerConfig.hci_uart_baudrate = 912600;
+// #endif
 
   esp_bt_controller_init(&btControllerConfig);
   while (esp_bt_controller_get_status() == ESP_BT_CONTROLLER_STATUS_IDLE);
@@ -152,6 +171,8 @@ void setupBluetooth() {
 }
 
 void setupWiFi() {
+  // digitalWrite(25, LOW);
+  // digitalWrite(26, HIGH);
   esp_bt_controller_mem_release(ESP_BT_MODE_BTDM);
   SPIS.begin();
 
@@ -166,6 +187,10 @@ void setupWiFi() {
 }
 
 void loop() {
+  // pinMode(16, OUTPUT);
+  // pinMode(17, OUTPUT);
+  // digitalWrite(16, LOW);
+  // digitalWrite(17, HIGH);
   // wait for a command
   memset(commandBuffer, 0x00, SPI_BUFFER_LEN);
   int commandLength = SPIS.transfer(NULL, commandBuffer, SPI_BUFFER_LEN);
@@ -177,7 +202,7 @@ void loop() {
   if (debug) {
     dumpBuffer("COMMAND", commandBuffer, commandLength);
   }
-
+  
   // process
   memset(responseBuffer, 0x00, SPI_BUFFER_LEN);
   int responseLength = CommandHandler.handle(commandBuffer, responseBuffer);

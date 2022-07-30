@@ -47,3 +47,7 @@ int digitalRead(uint32_t pin)
 {
   return gpio_get_level(pin);
 }
+
+void resetPin(uint32_t pin){
+  gpio_reset_pin((gpio_num_t)pin);
+}
